@@ -1,26 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { CityMindProvider, useCityMind } from "@/lib/citymind";
+import { Login } from "@/components/citymind/Login";
+import { UserDashboard } from "@/components/citymind/UserDashboard";
+import { AdminDashboard } from "@/components/citymind/AdminDashboard";
+import { ClientDashboard } from "@/components/citymind/ClientDashboard";
+import { Toaster } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+function Router() {
+  const { user } = useCityMind();
+  if (!user) return <Login />;
+  if (user.role === "admin") return <AdminDashboard />;
+  if (user.role === "client") return <ClientDashboard />;
+  return <UserDashboard />;
 }
 
 function Index() {
-  return <PlaceholderIndex />;
+  return (
+    <CityMindProvider>
+      <Router />
+      <Toaster position="top-right" richColors />
+    </CityMindProvider>
+  );
 }
