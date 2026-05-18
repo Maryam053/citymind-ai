@@ -177,45 +177,46 @@ export function useCityMind() {
   return ctx;
 }
 
-export const OPENROUTER_MODELS = [
-  "mistralai/mistral-7b-instruct:free",
-  "google/gemma-3-4b-it:free",
-  "meta-llama/llama-3.2-3b-instruct:free",
-];
+const GEMINI_ENDPOINT =
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-export async function callOpenRouter(
+export async function callGemini(
   apiKey: string,
   messages: { role: string; content: string }[],
 ): Promise<string> {
   const key =
     apiKey ||
     (typeof window !== "undefined" ? localStorage.getItem("citymind_api_key") || "" : "");
-  if (!key) throw new Error("OpenRouter API key not set. Paste your key at the top of the dashboard to activate AI.");
+  if (!key)
+    throw new Error(
+      "Gemini API key not set. Paste your key at the top of the dashboard to activate AI.",
+    );
 
-  let lastErr: string = "";
-  for (const model of OPENROUTER_MODELS) {
-    try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-          "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-          "X-Title": "CityMind",
-        },
-        body: JSON.stringify({ model, messages }),
-      });
-      if (!res.ok) {
-        lastErr = `${model} → ${res.status}: ${(await res.text()).slice(0, 160)}`;
-        continue;
-      }
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-      if (content) return content;
-      lastErr = `${model} → empty response`;
-    } catch (e) {
-      lastErr = `${model} → ${(e as Error).message}`;
-    }
+  const systemPrompt = messages
+    .filter((m) => m.role === "system")
+    .map((m) => m.content)
+    .join("\n");
+  const convo = messages
+    .filter((m) => m.role !== "system")
+    .map((m) => `${m.role === "assistant" ? "Assistant" : "User"}: ${m.content}`)
+    .join("\n");
+  const text = systemPrompt + "\n\n" + convo;
+
+  const res = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text }] }],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Gemini error ${res.status}: ${(await res.text()).slice(0, 200)}`);
   }
-  throw new Error(`All OpenRouter models failed. Last error: ${lastErr}`);
+  const data = await res.json();
+  const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!reply) throw new Error("Gemini returned empty response");
+  return reply;
 }
+
+// Backwards-compat alias so existing call sites keep working.
+export const callOpenRouter = callGemini;
