@@ -103,7 +103,7 @@ export function UserDashboard() {
     <Layout title="Welcome, Citizen" navLabel="My City Dashboard">
       <Card className="p-4 mb-4 border-emerald-200">
         <label className="text-sm font-semibold text-slate-700 block mb-2">
-          Enter OpenRouter API Key to activate AI
+          Enter Gemini API Key to activate AI
         </label>
         <div className="flex gap-2">
           <input
