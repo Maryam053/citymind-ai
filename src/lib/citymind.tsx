@@ -177,10 +177,9 @@ export function useCityMind() {
   return ctx;
 }
 
-const GEMINI_ENDPOINT =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
 
-export async function callGemini(
+export async function callClaude(
   apiKey: string,
   messages: { role: string; content: string }[],
 ): Promise<string> {
@@ -189,34 +188,41 @@ export async function callGemini(
     (typeof window !== "undefined" ? localStorage.getItem("citymind_api_key") || "" : "");
   if (!key)
     throw new Error(
-      "Gemini API key not set. Paste your key at the top of the dashboard to activate AI.",
+      "Anthropic API key not set. Paste your key at the top of the dashboard to activate AI.",
     );
 
   const systemPrompt = messages
     .filter((m) => m.role === "system")
     .map((m) => m.content)
     .join("\n");
-  const convo = messages
-    .filter((m) => m.role !== "system")
-    .map((m) => `${m.role === "assistant" ? "Assistant" : "User"}: ${m.content}`)
-    .join("\n");
-  const text = systemPrompt + "\n\n" + convo;
+  const conversationHistory = messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role, content: m.content }));
 
-  const res = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(key)}`, {
+  const response = await fetch(ANTHROPIC_ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text }] }],
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 500,
+      system: systemPrompt,
+      messages: conversationHistory,
     }),
   });
-  if (!res.ok) {
-    throw new Error(`Gemini error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!response.ok) {
+    throw new Error(`Anthropic error ${response.status}: ${(await response.text()).slice(0, 200)}`);
   }
-  const data = await res.json();
-  const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!reply) throw new Error("Gemini returned empty response");
+  const data = await response.json();
+  const reply = data?.content?.[0]?.text;
+  if (!reply) throw new Error("Anthropic returned empty response");
   return reply;
 }
 
-// Backwards-compat alias so existing call sites keep working.
-export const callOpenRouter = callGemini;
+// Backwards-compat aliases so existing call sites keep working.
+export const callGemini = callClaude;
+export const callOpenRouter = callClaude;
