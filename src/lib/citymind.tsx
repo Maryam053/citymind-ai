@@ -92,7 +92,7 @@ const seedIssues = (): Issue[] => {
 
 const LS_USER = "citymind:user";
 const LS_ISSUES = "citymind:issues";
-const LS_KEY = "citymind:apikey";
+const LS_KEY = "citymind_api_key";
 const LS_CITY = "citymind:city";
 
 export function CityMindProvider({ children }: { children: ReactNode }) {
@@ -177,28 +177,45 @@ export function useCityMind() {
   return ctx;
 }
 
+export const OPENROUTER_MODELS = [
+  "mistralai/mistral-7b-instruct:free",
+  "google/gemma-3-4b-it:free",
+  "meta-llama/llama-3.2-3b-instruct:free",
+];
+
 export async function callOpenRouter(
   apiKey: string,
   messages: { role: string; content: string }[],
 ): Promise<string> {
-  if (!apiKey) throw new Error("OpenRouter API key not set. Ask an admin to configure it in Settings.");
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-      "X-Title": "CityMind",
-    },
-    body: JSON.stringify({
-      model: "meta-llama/llama-3.3-70b-instruct:free",
-      messages,
-    }),
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`OpenRouter error ${res.status}: ${t.slice(0, 200)}`);
+  const key =
+    apiKey ||
+    (typeof window !== "undefined" ? localStorage.getItem("citymind_api_key") || "" : "");
+  if (!key) throw new Error("OpenRouter API key not set. Paste your key at the top of the dashboard to activate AI.");
+
+  let lastErr: string = "";
+  for (const model of OPENROUTER_MODELS) {
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+          "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
+          "X-Title": "CityMind",
+        },
+        body: JSON.stringify({ model, messages }),
+      });
+      if (!res.ok) {
+        lastErr = `${model} → ${res.status}: ${(await res.text()).slice(0, 160)}`;
+        continue;
+      }
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (content) return content;
+      lastErr = `${model} → empty response`;
+    } catch (e) {
+      lastErr = `${model} → ${(e as Error).message}`;
+    }
   }
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "(no response)";
+  throw new Error(`All OpenRouter models failed. Last error: ${lastErr}`);
 }
