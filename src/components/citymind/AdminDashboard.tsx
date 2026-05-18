@@ -359,7 +359,7 @@ export function AdminDashboard() {
           </span>
         </div>
         <p className="text-xs text-slate-500 mt-2">
-          Get a free key at openrouter.ai. Stored only in your browser's localStorage.
+          Get a free key at aistudio.google.com. Stored only in your browser's localStorage.
         </p>
       </Card>
     </Layout>
