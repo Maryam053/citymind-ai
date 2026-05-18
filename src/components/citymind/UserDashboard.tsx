@@ -23,7 +23,7 @@ const SYSTEM_PROMPT =
   "You are CityMind, an AI urban planning assistant for Pakistani cities. Help citizens with questions about traffic congestion, waste management, housing issues, energy problems, and urban development. Always relate answers to Vision 2030 goals. Be concise, helpful, and cite specific recommendations.";
 
 export function UserDashboard() {
-  const { city, setCity, issues, addIssue, apiKey } = useCityMind();
+  const { city, setCity, issues, addIssue, apiKey, setApiKey } = useCityMind();
   const [chat, setChat] = useState<ChatMessage[]>([
     {
       id: "init",
@@ -101,6 +101,28 @@ export function UserDashboard() {
 
   return (
     <Layout title="Welcome, Citizen" navLabel="My City Dashboard">
+      <Card className="p-4 mb-4 border-emerald-200">
+        <label className="text-sm font-semibold text-slate-700 block mb-2">
+          Enter OpenRouter API Key to activate AI
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="sk-or-v1-..."
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <span
+            className={`px-3 py-2 rounded-lg text-xs font-medium ${
+              apiKey ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+            }`}
+          >
+            {apiKey ? "AI Connected" : "Not Connected"}
+          </span>
+        </div>
+      </Card>
+
       <div className="mb-4 flex items-center gap-3">
         <label className="text-sm font-medium text-slate-700">City:</label>
         <select
