@@ -177,9 +177,10 @@ export function useCityMind() {
   return ctx;
 }
 
-const ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
+const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
 
-export async function callClaude(
+export async function callOpenRouter(
   apiKey: string,
   messages: { role: string; content: string }[],
 ): Promise<string> {
@@ -188,41 +189,29 @@ export async function callClaude(
     (typeof window !== "undefined" ? localStorage.getItem("citymind_api_key") || "" : "");
   if (!key)
     throw new Error(
-      "Anthropic API key not set. Paste your key at the top of the dashboard to activate AI.",
+      "OpenRouter API key not set. Paste your key at the top of the dashboard to activate AI.",
     );
 
-  const systemPrompt = messages
-    .filter((m) => m.role === "system")
-    .map((m) => m.content)
-    .join("\n");
-  const conversationHistory = messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({ role: m.role, content: m.content }));
-
-  const response = await fetch(ANTHROPIC_ENDPOINT, {
+  const response = await fetch(OPENROUTER_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
+      Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 500,
-      system: systemPrompt,
-      messages: conversationHistory,
+      model: OPENROUTER_MODEL,
+      messages,
     }),
   });
   if (!response.ok) {
-    throw new Error(`Anthropic error ${response.status}: ${(await response.text()).slice(0, 200)}`);
+    throw new Error(`OpenRouter error ${response.status}: ${(await response.text()).slice(0, 200)}`);
   }
   const data = await response.json();
-  const reply = data?.content?.[0]?.text;
-  if (!reply) throw new Error("Anthropic returned empty response");
+  const reply = data?.choices?.[0]?.message?.content;
+  if (!reply) throw new Error("OpenRouter returned empty response");
   return reply;
 }
 
 // Backwards-compat aliases so existing call sites keep working.
-export const callGemini = callClaude;
-export const callOpenRouter = callClaude;
+export const callClaude = callOpenRouter;
+export const callGemini = callOpenRouter;
