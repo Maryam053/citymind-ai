@@ -75,11 +75,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "CityMind — AI Smart City Management for Pakistan" },
       { name: "description", content: "AI-powered smart city management platform for Pakistani cities, aligned with SDG 11 and Vision 2030." },
       { name: "author", content: "CityMind" },
-      { property: "og:title", content: "CityMind — AI Smart City Management" },
-      { property: "og:description", content: "Smart city management for Pakistan, aligned with SDG 11 and Vision 2030." },
+      { property: "og:title", content: "CityMind — AI Smart City Management for Pakistan" },
+      { property: "og:description", content: "AI-powered smart city management platform for Pakistani cities, aligned with SDG 11 and Vision 2030." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "CityMind — AI Smart City Management for Pakistan" },
+      { name: "twitter:description", content: "AI-powered smart city management platform for Pakistani cities, aligned with SDG 11 and Vision 2030." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3e5316c8-720f-484d-a6a3-04f66c978f24/id-preview-58338515--7108aa0e-a779-4593-8b2c-03903799ebba.lovable.app-1779352543117.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3e5316c8-720f-484d-a6a3-04f66c978f24/id-preview-58338515--7108aa0e-a779-4593-8b2c-03903799ebba.lovable.app-1779352543117.png" },
     ],
     links: [
       {
